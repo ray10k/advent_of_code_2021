@@ -31,6 +31,8 @@ def parse_string(to_parse:str):
     return current_node
 
 def explode_number(tree:TreeNode) -> TreeNode:
+    if tree.depth() <= 4:
+        return tree
     #Start by tracing the tree left-to-right until an excessively
     #deeply nested pair is found.
 
@@ -101,7 +103,7 @@ def split_number(tree:TreeNode) -> None:
             break
     return tree
 
-def reduce(tree:TreeNode) -> TreeNode:
+def reduce(tree:TreeNode,single_step=False) -> TreeNode:
     splits,explos = 0,0
     while True:
         #Repeatedly try to reduce the snail number until it sticks.
@@ -114,6 +116,8 @@ def reduce(tree:TreeNode) -> TreeNode:
         else:
             splits += 1
             split_number(tree)
+        if single_step:
+            break
     print(f"exploded {explos}; split {splits}")
     return tree
 

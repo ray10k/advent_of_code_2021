@@ -53,6 +53,14 @@ print("first star:")
 
 def test_battery():
     errors = 0
+
+    big_boom = parse_string('[[[[[1,1],[2,2]],[[3,3],[4,4]]],[[[5,5],[6,6]],[[7,7],[8,8]]]],[[[[1,1],[2,2]],[[3,3],[4,4]]],[[[5,5],[6,6]],[[7,7],[8,8]]]]]')
+    print(big_boom.depth())
+    print(big_boom.get_leaves())
+    for i in range(30):
+        print(f"Step {i}: {str(big_boom)}")
+        sf.explode_number(big_boom)
+
     #Test if the magnitude calculations are correct.
     my_directory = pathlib.Path(__file__).parent
     with open(my_directory/"mag_tests.txt") as tests:
@@ -93,6 +101,17 @@ def test_battery():
             if expected != str(current_result):
                 print("ERR")
                 errors+=1
+                #start from the top, but go single-step this time.
+                current_result = parse_string(to_add[0])
+                for num in to_add[1:]:
+                    current_result = current_result + parse_string(num)
+                    curr_str = str(current_result)
+                    prev_str = ""
+                    while curr_str != prev_str:
+                        prev_str = curr_str
+                        print(prev_str)
+                        sf.reduce(current_result,True)
+                        curr_str = str(current_result)
 
     #Finally, addition-with-reduction tests.
     
