@@ -1,10 +1,11 @@
 import pathlib
 from typing import List
-from math import floor,ceil
-from tree import LeafNode,TreeNode
+from tree import LeafNode, TreeNode
 import snailfish as sf
-    
-def parse_string(to_parse:str):
+import itertools as itt
+
+
+def parse_string(to_parse: str):
     iterator = iter(to_parse)
     next(iterator)
     current_node = TreeNode(None)
@@ -12,7 +13,7 @@ def parse_string(to_parse:str):
     build_stack = [current_node]
     for character in iterator:
         if character == "[":
-            #New layer to add.
+            # New layer to add.
             new_layer = TreeNode(current_node)
             current_node.insert(new_layer)
             build_stack.append(current_node)
@@ -24,46 +25,44 @@ def parse_string(to_parse:str):
             current_leaf = LeafNode(0)
             continue
         if character == "]":
-            #Drop down a layer.
+            # Drop down a layer.
             current_node.insert(current_leaf)
             current_leaf = LeafNode(-1)
             current_node = build_stack.pop()
             continue
         current_leaf.append(character)
-        
+
     return current_node
+
 
 input_path = pathlib.Path(__file__).parent / "input.txt"
 
-snail_numbers:List[TreeNode] = []
-
-
+snail_numbers: List[TreeNode] = []
 
 print("\n\nparsing input file\n")
 
-with open(input_path,"r") as input_file:
+with open(input_path, "r") as input_file:
     for line in input_file:
-        print(line.strip(),end = " -> ")
         root_node = parse_string(line.strip())
-        print(str(root_node))
         snail_numbers.append(root_node)
 print("first star:")
-
 
 
 def test_battery():
     errors = 0
 
-    big_boom = parse_string('[[[[[1,1],[2,2]],[[3,3],[4,4]]],[[[5,5],[6,6]],[[7,7],[8,8]]]],[[[[1,1],[2,2]],[[3,3],[4,4]]],[[[5,5],[6,6]],[[7,7],[8,8]]]]]')
+    big_boom = parse_string(
+        "[[[[[1,1],[2,2]],[[3,3],[4,4]]],[[[5,5],[6,6]],[[7,7],[8,8]]]],[[[[1,1],[2,2]],[[3,3],[4,4]]],[[[5,5],[6,6]],[[7,7],[8,8]]]]]"
+    )
     print(big_boom.depth())
     print(big_boom.get_leaves())
     for i in range(30):
         print(f"Step {i}: {str(big_boom)}")
         sf.explode_number(big_boom)
 
-    #Test if the magnitude calculations are correct.
+    # Test if the magnitude calculations are correct.
     my_directory = pathlib.Path(__file__).parent
-    with open(my_directory/"mag_tests.txt") as tests:
+    with open(my_directory / "mag_tests.txt") as tests:
         for line in tests:
             line = line.strip()
             print(line)
@@ -73,8 +72,8 @@ def test_battery():
             if expected != magnitude:
                 print("ERR")
                 errors += 1
-    #Explosion tests next.
-    with open(my_directory/"exp_tests.txt") as tests:
+    # Explosion tests next.
+    with open(my_directory / "exp_tests.txt") as tests:
         for line in tests:
             trees = line.strip().split("->")
             print(f"Exploding <{trees[0]}> to get <{trees[1]}>")
@@ -84,9 +83,9 @@ def test_battery():
             print(f"<{str(trees[0])}>==<{str(trees[1])}>")
             if str(trees[0]) != str(trees[1]):
                 print("ERR")
-                errors+=1
-    #Reduction tests
-    with open(my_directory/"reduction_tests.txt") as tests:
+                errors += 1
+    # Reduction tests
+    with open(my_directory / "reduction_tests.txt") as tests:
         for line in tests:
             line = line.strip()
             q_and_a = line.split("=")
@@ -97,11 +96,13 @@ def test_battery():
             for num in to_add[1:]:
                 current_result = current_result + parse_string(num)
                 sf.reduce(current_result)
-            print(f"Expected result: {expected}\nactual result:   {str(current_result)}")
+            print(
+                f"Expected result: {expected}\nactual result:   {str(current_result)}"
+            )
             if expected != str(current_result):
                 print("ERR")
-                errors+=1
-                #start from the top, but go single-step this time.
+                errors += 1
+                # start from the top, but go single-step this time.
                 current_result = parse_string(to_add[0])
                 for num in to_add[1:]:
                     current_result = current_result + parse_string(num)
@@ -110,28 +111,45 @@ def test_battery():
                     while curr_str != prev_str:
                         prev_str = curr_str
                         print(prev_str)
-                        sf.reduce(current_result,True)
+                        sf.reduce(current_result, True)
                         curr_str = str(current_result)
 
-    #Finally, addition-with-reduction tests.
-    
+    # Finally, addition-with-reduction tests.
 
-    print("Encountered",errors,"mis-matches between expected and given values.")
+    print("Encountered", errors, "mis-matches between expected and given values.")
     pass
 
-test_battery()
-exit()
 
 result = snail_numbers[0]
 
 for current in snail_numbers[1:]:
-    print(f"{str(result)} + {str(current)} = ",end="")
     result = result + current
     sf.reduce(result)
-    
+
 
 print(repr(result))
 
 print(f"Final snail number: {result}. Magnitude: {sf.calculate_magnitude(result)}")
 
 print("second star:")
+
+left, right, magnitude = None, None, 0
+ticks = 0
+for test_l, test_r in itt.product(snail_numbers, snail_numbers):
+    ticks += 1
+    if test_l is test_r:
+        continue
+    snail_sum = test_l + test_r
+    sf.reduce(snail_sum)
+    mag = sf.calculate_magnitude(snail_sum)
+    if mag > magnitude:
+        magnitude = mag
+        left = test_l
+        right = test_r
+        print(
+            f"New best found: {left} + {right} = {snail_sum} for a magnitude of {mag}"
+        )
+
+print(
+    f"Final best found: {left} + {right}, magnitude {magnitude} after {ticks} attempts"
+)
